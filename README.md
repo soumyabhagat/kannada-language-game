@@ -22,7 +22,7 @@ Even though I made it for my own use case, anyone interested in learning Kannada
 
 ## 🚀 Try it Out
 You can view and use the app here:  
-👉 **[https://github.com/soumyabhagat/kannada-language-game](https://github.com/soumyabhagat/kannada-language-game)**  
+👉 **[https://soumyabhagat.github.io/kannada-language-game/](https://soumyabhagat.github.io/kannada-language-game/)**  
 
 ## 🔧 Improvements Welcome!
 This is an early version, and I'm always open to feedback or corrections — especially from native speakers or fellow learners.
