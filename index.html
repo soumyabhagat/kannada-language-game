@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Word Quiz</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: linear-gradient(to bottom right, #e0f2fe, #c7d2fe);
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin: 10px auto;
+      width: 100%;
+      max-width: 500px;
+    }
+    .quiz-options button {
+      background: white;
+      color: black;
+      border: 1px solid #ccc;
+      margin: 5px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 1rem;
+    }
+    .quiz-options button:hover {
+      background-color: #ddd;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+    }
+    button {
+      margin: 10px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #6366f1;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background-color: #4f46e5;
+    }
+    #feedback {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    #modeSelectors {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin: 0 10px 10px 10px;
+      min-width: 180px;
+    }
+    .speak-btn {
+      background-color: #f59e0b;
+      color: white;
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    .speak-btn:hover {
+      background-color: #d97706;
+    }
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      .quiz-options button {
+        font-size: 0.95rem;
+      }
+      select, button {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Word Quiz</h1>
+
+<div id="modeSelectors">
+  <label><strong>Quiz Type:</strong> </label>
+  <select id="quizType" onchange="resetQuiz()">
+    <option value="word">Word Mode</option>
+    <option value="sentence">Sentence Mode</option>
+  </select>
+
+  <label><strong>Mode:</strong> </label>
+  <select id="quizMode" onchange="resetQuiz()">
+    <option value="kannada-english">Kannada → English</option>
+    <option value="bengali-kannada">Bengali → Kannada</option>
+    <option value="kannada-bengali">Kannada → Bengali</option>
+    <option value="english-kannada">English → Kannada</option>
+  </select>
+</div>
+
+<div id="app">
+  <div class="card" id="quizCard"></div>
+  <div id="feedback"></div>
+  <div class="footer">
+    <button onclick="nextWave()">Next Wave</button>
+  </div>
+</div>
+
+<!-- Your existing words.js -->
+<script src="words.js"></script>
+<!-- Your new sentences.js (make sure you have this file with sentence data structured similarly) -->
+<script src="sentences.js"></script>
+
+<script>
+  let wave = 0;
+  let currentQuestion = 0;
+  let score = 0;
+
+  // Get selected quiz type
+  function getQuizType() {
+    return document.getElementById("quizType").value;
+  }
+
+  // Get selected mode (language direction)
+  function getMode() {
+    return document.getElementById("quizMode").value;
+  }
+
+  // Shuffle helper
+  function shuffle(array) {
+    return array.sort(() => 0.5 - Math.random());
+  }
+
+  // Pick random options excluding the correct answer
+  function getRandomOptions(array, exclude, count) {
+    return array.filter(v => v !== exclude).sort(() => 0.5 - Math.random()).slice(0, count);
+  }
+
+  // Main render function
+  function render() {
+    const quizCard = document.getElementById('quizCard');
+    const feedback = document.getElementById('feedback');
+    feedback.innerText = '';
+
+    const quizType = getQuizType();
+    const mode = getMode();
+
+    // Decide which data array to use
+    let data = quizType === 'word' ? words : sentences;
+
+    const waveData = data.slice(wave * 10, wave * 10 + 10);
+
+    if (currentQuestion >= waveData.length) {
+      quizCard.innerHTML = `<h2>Your Score: ${score} / ${waveData.length}</h2>`;
+      return;
+    }
+
+    const item = waveData[currentQuestion];
+
+    // Variables for question and answer
+    let questionText = '';
+    let correctAnswer = '';
+    let optionPool = [];
+    let showSpeakBtn = false;
+    let speakText = '';
+
+    if (quizType === 'word') {
+      // Word mode logic (same as before)
+      switch (mode) {
+        case "kannada-english":
+          questionText = item.kannada;
+          correctAnswer = item.english;
+          optionPool = words.map(w => w.english);
+          showSpeakBtn = true;
+          speakText = item.kannada;
+          break;
+        case "bengali-kannada":
+          questionText = item.bengali;
+          correctAnswer = item.kannada;
+          optionPool = words.map(w => w.kannada);
+          break;
+        case "kannada-bengali":
+          questionText = item.kannada;
+          correctAnswer = item.bengali;
+          optionPool = words.map(w => w.bengali);
+          showSpeakBtn = true;
+          speakText = item.kannada;
+          break;
+        case "english-kannada":
+          questionText = item.english;
+          correctAnswer = item.kannada;
+          optionPool = words.map(w => w.english);
+          speakText = item.kannada;
+          break;
+      }
+    } else {
+      // Sentence mode logic
+      // Assuming your sentences.js has similar structure with properties matching keys used below
+      switch (mode) {
+        case "kannada-english":
+          questionText = item.kannada;
+          correctAnswer = item.english;
+          optionPool = sentences.map(s => s.english);
+          showSpeakBtn = true;
+          speakText = item.kannada;
+          break;
+        case "bengali-kannada":
+          questionText = item.bengali;
+          correctAnswer = item.kannada;
+          optionPool = sentences.map(s => s.kannada);
+          break;
+        case "kannada-bengali":
+          questionText = item.kannada;
+          correctAnswer = item.bengali;
+          optionPool = sentences.map(s => s.bengali);
+          showSpeakBtn = true;
+          speakText = item.kannada;
+          break;
+        case "english-kannada":
+          questionText = item.english;
+          correctAnswer = item.kannada;
+          optionPool = sentences.map(s => s.english);
+          speakText = item.kannada;
+          break;
+      }
+    }
+
+    const options = shuffle([
+      correctAnswer,
+      ...getRandomOptions(optionPool, correctAnswer, 2)
+    ]);
+
+    quizCard.innerHTML = `
+      <h2>${questionText}</h2>
+      ${showSpeakBtn ? `<button class="speak-btn" onclick="speakKannada('${speakText}')">🔊 Speak</button>` : ''}
+      <p><strong>What is the correct translation?</strong></p>
+      <div class="quiz-options">
+        ${options.map(opt => `<button onclick="checkAnswer(this, '${opt}', '${correctAnswer}')">${opt}</button>`).join('')}
+      </div>
+    `;
+  }
+
+  function checkAnswer(button, selected, correct) {
+    const feedback = document.getElementById("feedback");
+    const buttons = document.querySelectorAll(".quiz-options button");
+
+    buttons.forEach(btn => {
+      btn.disabled = true;
+      const txt = btn.innerText;
+      if (txt === correct) {
+        btn.style.backgroundColor = "#4ade80"; // green
+      }
+      if (txt === selected && selected !== correct) {
+        btn.style.backgroundColor = "#f87171"; // red
+      }
+    });
+
+    if (selected === correct) {
+      score++;
+      feedback.innerText = "✅ Correct!";
+      feedback.style.color = "green";
+    } else {
+      feedback.innerText = `❌ Wrong! Correct: ${correct}`;
+      feedback.style.color = "red";
+    }
+
+    setTimeout(() => {
+      currentQuestion++;
+      render();
+    }, 2000);
+  }
+
+  function nextWave() {
+    const quizType = getQuizType();
+    const data = quizType === 'word' ? words : sentences;
+    wave = (wave + 1) % Math.ceil(data.length / 10);
+    currentQuestion = 0;
+    score = 0;
+    render();
+  }
+
+  function resetQuiz() {
+    wave = 0;
+    currentQuestion = 0;
+    score = 0;
+    render();
+  }
+
+  function speakKannada(text) {
+    if ('speechSynthesis' in window) {
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.lang = 'kn-IN'; // Kannada
+      speechSynthesis.speak(msg);
+    }
+  }
+
+  // Initial render
+  render();
+</script>
+
+</body>
+</html>
